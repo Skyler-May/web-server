@@ -42,6 +42,14 @@ public class VendorProperties {
     /** 签名有效期（秒）；超过此时间的请求视为过期，防重放 */
     private long signTtlSeconds = 300L;
 
+    /**
+     * H5 客户端基础地址（聚合平台免登录直达用）
+     *
+     * 例：https://h5.example.com/index.html
+     * 未配置时 launchUrl 为空，聚合端需自行拼装地址。
+     */
+    private String h5BaseUrl;
+
     /** 允许多次结算回调重试的窗口（秒） */
     private long settleWindowSeconds = 3600L;
 
@@ -76,6 +84,14 @@ public class VendorProperties {
 
     public void setSignTtlSeconds(long signTtlSeconds) {
         this.signTtlSeconds = signTtlSeconds;
+    }
+
+    public String getH5BaseUrl() {
+        return h5BaseUrl;
+    }
+
+    public void setH5BaseUrl(String h5BaseUrl) {
+        this.h5BaseUrl = h5BaseUrl;
     }
 
     public long getSettleWindowSeconds() {

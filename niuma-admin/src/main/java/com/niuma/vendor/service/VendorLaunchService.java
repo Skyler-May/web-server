@@ -68,6 +68,10 @@ public class VendorLaunchService {
     @Autowired
     private ICapitalService capitalService;
 
+    /** 用于取 H5 基础地址（聚合平台免登录直达） */
+    @Autowired
+    private com.niuma.vendor.config.VendorProperties vendorProperties;
+
     /**
      * 启动游戏
      *
@@ -105,9 +109,42 @@ public class VendorLaunchService {
         response.setResourceKey(game.getResourceKey());
         response.setWsUrl(request.getWsBaseUrl());
 
+        // 生成免登录直达地址：由厂商侧拼装，客户端直接打开即可
+        response.setLaunchUrl(buildLaunchUrl(token, game.getGameCode()));
+
         log.info("vendor launch: appId={}, externalPlayerId={}, playerId={}, game={}({})",
                 appId, request.getPlayerId(), playerId, game.getGameCode(), game.getGameType());
         return response;
+    }
+
+    /**
+     * 生成 H5 免登录直达地址
+     *
+     * 形如：{h5BaseUrl}?token=Bearer%20xxx&game=GuanDan&gameType=GUANDAN
+     * H5 客户端会读取这些参数：注入 token、跳过登录页、直接进目标游戏。
+     *
+     * @return 未配置 h5-base-url 时返回 null（聚合端可自行拼装）
+     */
+    private String buildLaunchUrl(String token, String gameCode) {
+        String base = vendorProperties.getH5BaseUrl();
+        if (base == null || base.trim().isEmpty()) {
+            return null;
+        }
+        String sep = base.contains("?") ? "&" : "?";
+        StringBuilder sb = new StringBuilder(base.trim());
+        sb.append(sep)
+          .append("token=").append(urlEncode(token))
+          .append("&game=").append(urlEncode(gameCode));
+        return sb.toString();
+    }
+
+    private String urlEncode(String v) {
+        if (v == null) return "";
+        try {
+            return java.net.URLEncoder.encode(v, "UTF-8");
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     /**

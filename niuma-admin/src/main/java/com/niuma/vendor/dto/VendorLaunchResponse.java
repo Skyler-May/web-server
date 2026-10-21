@@ -33,6 +33,15 @@ public class VendorLaunchResponse implements Serializable {
     /** WebSocket 基础地址（客户端连接对局长连接用） */
     private String wsUrl;
 
+    /**
+     * 免登录直达地址（H5）
+     *
+     * 由 NiuMa 侧生成，已内嵌 token 与目标游戏参数。
+     * 聚合平台客户端**直接打开该地址即可**，不需要自己拼接参数，
+     * 也不需要玩家再次登录。
+     */
+    private String launchUrl;
+
     public String getToken() {
         return token;
     }
@@ -87,5 +96,13 @@ public class VendorLaunchResponse implements Serializable {
 
     public void setWsUrl(String wsUrl) {
         this.wsUrl = wsUrl;
+    }
+
+    public String getLaunchUrl() {
+        return launchUrl;
+    }
+
+    public void setLaunchUrl(String launchUrl) {
+        this.launchUrl = launchUrl;
     }
 }
