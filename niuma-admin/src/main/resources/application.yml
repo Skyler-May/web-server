@@ -103,3 +103,36 @@ xss:
   excludes: /system/notice
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
+
+# ============================================================
+# 厂商接入（标准厂商 API 模式）
+# ------------------------------------------------------------
+# 默认关闭：关闭时 NiuMa 与原版完全一致，可独立运行/独立售卖。
+# 开启后额外暴露 {api-prefix}/catalog、/launch、/health 接口，
+# 供聚合平台（如 gaming-server）以标准厂商方式接入。
+#
+# 开启方式（生产环境建议用环境变量或外部配置覆盖，勿提交密钥）：
+#   niuma.vendor.enabled=true
+#   niuma.vendor.apps[0].app-id=gaming
+#   niuma.vendor.apps[0].app-secret=<强随机密钥>
+# ============================================================
+niuma:
+  vendor:
+    # 是否启用厂商接入模式；false = 原版行为，厂商接口不可用
+    enabled: false
+    # 厂商 API 路径前缀
+    api-prefix: /vendor
+    # 签名有效期（秒），超出视为过期请求
+    sign-ttl-seconds: 300
+    # 结算回调窗口（秒）
+    settle-window-seconds: 3600
+    # 结算扫描任务开关（后续实现逐局回调时启用）
+    settle-job-enabled: false
+    settle-job-interval-ms: 30000
+    # 已授权的接入方列表
+    apps: []
+#     - app-id: gaming
+#       app-secret: change-me-in-production
+#       name: Gaming 聚合平台
+#       settle-callback-url: http://127.0.0.1:8080/api/v1/vendor/niuma/settle
+#       enabled: true

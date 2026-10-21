@@ -123,6 +123,14 @@ public class SecurityConfig
                 requests.antMatchers("/login", "/register", "/captchaImage").permitAll()
                     // 玩家资源，可匿名访问，走玩家资源的认证方式
                     .antMatchers("/player/**").permitAll()
+                    // ============================================================
+                    // 厂商接入接口（标准厂商 API）
+                    // 走独立的 HMAC-SHA256 签名认证（VendorApiController 内校验），
+                    // 不使用 JWT / 玩家令牌，因此在此放行。
+                    // 当 niuma.vendor.enabled=false 时，这些接口在控制器内部
+                    // 统一返回 404，行为与原版一致（对外不可见）。
+                    // ============================================================
+                    .antMatchers("/vendor/**").permitAll()
                     // 静态资源，可匿名访问
                     .antMatchers(HttpMethod.GET, "/", "/*.html", "/**/*.html", "/**/*.css", "/**/*.js", "/profile/**").permitAll()
                     .antMatchers("/swagger-ui.html", "/swagger-resources/**", "/webjars/**", "/*/api-docs", "/druid/**").permitAll()
