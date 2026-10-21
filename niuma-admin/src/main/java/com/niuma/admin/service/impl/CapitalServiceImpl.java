@@ -68,6 +68,80 @@ public class CapitalServiceImpl extends ServiceImpl<CapitalMapper, Capital> impl
         return entity;
     }
 
+    /**
+     * 玩家标识解析：支持「内部 ID」与「平台玩家名」两种入参
+     *
+     * 聚合平台传过来的通常是自己的 userId（作为 player.name 存在），
+     * 而 capital 表以内部随机 ID 关联，因此需要先解析再操作。
+     */
+    @Override
+    public String resolvePlayerId(String nameOrId) {
+        if (StringUtils.isEmpty(nameOrId)) {
+            return null;
+        }
+        // 先按内部 ID 直查（capital 主键即内部玩家 ID）
+        Capital byId = this.baseMapper.selectById(nameOrId);
+        if (byId != null) {
+            return byId.getPlayerId();
+        }
+        // 再按玩家名查内部 ID
+        String innerId = this.playerMapper.getIdByName(nameOrId);
+        return StringUtils.isEmpty(innerId) ? null : innerId;
+    }
+
+    /**
+     * 厂商模式资金划转
+     *
+     * 直接操作 capital.gold（玩家游戏内金币），不依赖登录上下文。
+     *
+     * 并发安全：使用 version 乐观锁（setCapital 带 version 条件），
+     * 更新影响行数为 0 视为冲突，返回 false 由调用方决定是否重试。
+     *
+     * 注意：转出时若余额不足必须抛错，**不能扣成负数**——
+     * 这是资金安全的硬约束，宁可失败也不能透支。
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean vendorTransfer(String nameOrId, Long amount, boolean isIn) throws IllegalStateException {
+        if (amount == null || amount <= 0) {
+            throw new IllegalStateException("划转数量必须大于 0");
+        }
+        String playerId = resolvePlayerId(nameOrId);
+        if (playerId == null) {
+            throw new IllegalStateException("玩家不存在: " + nameOrId);
+        }
+        // 此处必须直查，不能用 getCapital（会自动初始化，掩盖"资产不存在"）
+        Capital entity = this.baseMapper.selectById(playerId);
+        if (entity == null) {
+            throw new IllegalStateException("玩家资产不存在: " + nameOrId);
+        }
+        Long gold = entity.getGold() == null ? 0L : entity.getGold();
+        Long deposit = entity.getDeposit() == null ? 0L : entity.getDeposit();
+
+        if (isIn) {
+            // 平台 → NiuMa：加金币
+            gold += amount;
+        } else {
+            // NiuMa → 平台：扣金币，不足直接拒绝
+            if (gold < amount) {
+                throw new IllegalStateException(
+                        "NiuMa 金币不足：现有 " + gold + "，需转出 " + amount);
+            }
+            gold -= amount;
+        }
+
+        Integer count = this.baseMapper.setCapital(playerId, gold, deposit, null, entity.getVersion());
+        if (count == null || count.equals(0)) {
+            // 乐观锁冲突，交由调用方重试
+            log.warn("vendorTransfer optimistic lock conflict: playerId={} version={}",
+                    playerId, entity.getVersion());
+            return false;
+        }
+        log.info("vendorTransfer ok: playerId={} amount={} direction={} gold {} -> {}",
+                playerId, amount, isIn ? "IN" : "OUT", entity.getGold(), gold);
+        return true;
+    }
+
     private void initCapital1(String playerId) {
         LambdaQueryWrapper<Capital> query = Wrappers.lambdaQuery();
         query.eq(Capital::getPlayerId, playerId);

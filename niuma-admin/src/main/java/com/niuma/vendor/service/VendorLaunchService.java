@@ -44,11 +44,17 @@ public class VendorLaunchService {
 
     private static final Logger log = LoggerFactory.getLogger(VendorLaunchService.class);
 
-    /** 新建玩家的初始金币（与 NiuMa 原注册流程一致） */
-    private static final long INITIAL_GOLD = 1000000L;
+    /**
+     * 新建玩家的初始金币
+     *
+     * ⚠️ 生产必须为 0：厂商模式下玩家资金一律由聚合平台从中心钱包转入，
+     * 若此处赠送金币，等于平台白送钱给玩家，属重大资金隐患。
+     * 仅在本地联调时可临时调高以便测试。
+     */
+    private static final long INITIAL_GOLD = 0L;
 
-    /** 新建玩家的初始钻石（与 NiuMa 原注册流程一致） */
-    private static final long INITIAL_DIAMOND = 1000L;
+    /** 新建玩家的初始钻石（同上，生产必须为 0） */
+    private static final long INITIAL_DIAMOND = 0L;
 
     @Autowired
     private VendorCatalogService vendorCatalogService;

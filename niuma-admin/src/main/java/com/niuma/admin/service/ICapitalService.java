@@ -18,6 +18,32 @@ public interface ICapitalService extends IService<Capital> {
 
     Capital getCapital(String playerId);
 
+    /**
+     * 把「外部平台玩家标识」解析为 NiuMa 内部玩家 ID
+     *
+     * 支持两种入参：
+     *  · 已是内部 ID（10 位随机码）→ 原样返回
+     *  · 平台侧玩家名（player.name）→ 查表得到内部 ID
+     *
+     * @param nameOrId 平台玩家标识或内部 ID
+     * @return 内部玩家 ID；不存在返回 null
+     */
+    String resolvePlayerId(String nameOrId);
+
+    /**
+     * 厂商模式资金划转（不依赖「当前登录玩家」上下文）
+     *
+     * 供聚合平台服务端调用：把玩家在 NiuMa 的游戏金币（capital.gold）
+     * 与平台中心钱包之间划转。
+     *
+     * @param nameOrId 平台玩家标识或内部 ID
+     * @param amount   划转数量（正整数，单位同金币）
+     * @param isIn     true=平台转入 NiuMa(加金币)；false=NiuMa 转出到平台(扣金币)
+     * @return true=成功；false=并发冲突
+     * @throws IllegalStateException 玩家不存在或余额不足（消息可直接展示）
+     */
+    boolean vendorTransfer(String nameOrId, Long amount, boolean isIn) throws IllegalStateException;
+
     AjaxResult bankPassword(BankPwdDTO dto);
 
     /**
