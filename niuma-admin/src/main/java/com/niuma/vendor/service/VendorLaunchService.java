@@ -73,6 +73,18 @@ public class VendorLaunchService {
     private com.niuma.vendor.config.VendorProperties vendorProperties;
 
     /**
+     * H5 基础地址（聚合平台免登录直达）
+     *
+     * 为什么单独用 @Value 而不是走 VendorProperties：
+     * 字段名 h5BaseUrl 对应的 getter 是 getH5BaseUrl()，按 JavaBean 规范
+     * 会被解析成属性 "H5BaseUrl"（大写 H），与配置项 h5-base-url 无法匹配，
+     * 导致 @ConfigurationProperties 绑不上（实测返回 null）。
+     * 用 @Value 显式指定 key 最可靠。
+     */
+    @org.springframework.beans.factory.annotation.Value("${niuma.vendor.h5-base-url:}")
+    private String h5BaseUrl;
+
+    /**
      * 启动游戏
      *
      * @param appId   接入方标识（已通过签名校验）
@@ -126,7 +138,9 @@ public class VendorLaunchService {
      * @return 未配置 h5-base-url 时返回 null（聚合端可自行拼装）
      */
     private String buildLaunchUrl(String token, String gameCode) {
-        String base = vendorProperties.getH5BaseUrl();
+        String base = h5BaseUrl;
+        // 诊断日志：h5-base-url 未生效时便于快速定位（配置项/绑定名/yml 位置）
+        log.info("buildLaunchUrl: h5BaseUrl={}", base);
         if (base == null || base.trim().isEmpty()) {
             return null;
         }

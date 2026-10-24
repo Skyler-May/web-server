@@ -119,7 +119,8 @@ xss:
 niuma:
   vendor:
     # 是否启用厂商接入模式；false = 原版行为，厂商接口不可用
-    enabled: false
+    # 本地 H5/Expo 联调时设为 true
+    enabled: true
     # 厂商 API 路径前缀
     api-prefix: /vendor
     # 签名有效期（秒），超出视为过期请求
@@ -127,12 +128,20 @@ niuma:
     # 结算回调窗口（秒）
     settle-window-seconds: 3600
     # 结算扫描任务开关（后续实现逐局回调时启用）
-    settle-job-enabled: false
+    settle-job-enabled: true
     settle-job-interval-ms: 30000
+    # H5 客户端基础地址（聚合平台免登录直达用）
+    # 必须是**客户端可访问**的地址：
+    #   本机浏览器调试 → http://127.0.0.1:8088/index.html
+    #   手机/Expo 调试  → http://<局域网IP>:8088/index.html
+    #   生产           → https://h5.域名/index.html
+    # 留空则 launch 不返回 launchUrl，聚合端需自行拼装
+    h5-base-url: http://192.168.3.83:8088/index.html
     # 已授权的接入方列表
-    apps: []
-#     - app-id: gaming
-#       app-secret: change-me-in-production
-#       name: Gaming 聚合平台
-#       settle-callback-url: http://127.0.0.1:8080/api/v1/vendor/niuma/settle
-#       enabled: true
+    # 注意：app-secret 生产环境必须改为强密钥，这里仅供本地联调
+    apps:
+      - app-id: gaming
+        app-secret: test-secret-12345
+        name: Gaming
+        settle-callback-url: http://127.0.0.1:8080/api/v1/vendor/callback/settle
+        enabled: true
