@@ -5,7 +5,9 @@ import com.niuma.admin.entity.Capital;
 import com.niuma.admin.entity.Player;
 import com.niuma.admin.mapper.PlayerMapper;
 import com.niuma.admin.service.ICapitalService;
+import com.niuma.common.constant.CacheConstants;
 import com.niuma.common.constant.Constants;
+import com.niuma.common.core.redis.RedisCache;
 import com.niuma.common.core.domain.model.LoginPlayer;
 import com.niuma.common.exception.http.InternalServerException;
 import com.niuma.common.utils.CommonUtils;
@@ -66,6 +68,9 @@ public class VendorLaunchService {
     private PlayerTokenService playerTokenService;
 
     @Autowired
+    private RedisCache redisCache;
+
+    @Autowired
     private ICapitalService capitalService;
 
     /** 用于取 H5 基础地址（聚合平台免登录直达） */
@@ -103,11 +108,25 @@ public class VendorLaunchService {
         String playerId = resolveOrCreatePlayer(appId, request.getPlayerId(), request.getNickname());
 
         // 3) 签发令牌（与原有登录流程同源，token 可直接用于既有全部玩家接口）
+        //
+        // 关键：复用已存在的会话 uuid。
+        // NiuMa 的鉴权流程是「token 里的 uuid 必须与 Redis 中 login_player:{id}.uuid 一致」，
+        // 而每次 launch 都重新生成 uuid 会把 Redis 里的会话覆盖掉
+        // —— 导致上一次还在用（同玩家开了第二个游戏、或页面刷新）的 token 立即失效，
+        // 表现为进入游戏后请求 /player/info 报「认证失败」，被踢回登录页。
+        // 因此：已有会话则沿用其 uuid，只续期；无会话才新建。
         LoginPlayer loginPlayer = new LoginPlayer();
         loginPlayer.setId(playerId);
         loginPlayer.setName(request.getPlayerId());
         loginPlayer.setNickName(request.getNickname());
-        loginPlayer.setUuid(IdUtils.fastSimpleUUID());
+
+        String sessionKey = CacheConstants.LOGIN_PLAYER_KEY + playerId;
+        LoginPlayer cached = this.redisCache.getCacheObject(sessionKey);
+        if (cached != null && StringUtils.isNotEmpty(cached.getUuid())) {
+            loginPlayer.setUuid(cached.getUuid());
+        } else {
+            loginPlayer.setUuid(IdUtils.fastSimpleUUID());
+        }
         this.playerTokenService.setLoginPlayer(loginPlayer);
         String token = Constants.TOKEN_PREFIX + this.playerTokenService.createToken(loginPlayer);
 

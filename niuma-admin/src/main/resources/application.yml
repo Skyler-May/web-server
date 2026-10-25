@@ -136,7 +136,7 @@ niuma:
     #   手机/Expo 调试  → http://<局域网IP>:8088/index.html
     #   生产           → https://h5.域名/index.html
     # 留空则 launch 不返回 launchUrl，聚合端需自行拼装
-    h5-base-url: http://192.168.3.83:8088/index.html
+    h5-base-url: http://192.168.3.85:18089/index.html
     # 已授权的接入方列表
     # 注意：app-secret 生产环境必须改为强密钥，这里仅供本地联调
     apps:
