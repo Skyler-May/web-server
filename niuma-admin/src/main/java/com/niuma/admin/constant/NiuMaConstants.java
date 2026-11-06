@@ -76,6 +76,7 @@ public final class NiuMaConstants {
      * 游戏类型：掼蛋
      */
     public static final int GAME_TYPE_GUAN_DAN = 1030;
+    public static final int GAME_TYPE_LANDLORD = 1031;
 
     /**
      * 区域ID-逮狗腿新手房
