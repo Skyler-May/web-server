@@ -77,6 +77,7 @@ public final class NiuMaConstants {
      */
     public static final int GAME_TYPE_GUAN_DAN = 1030;
     public static final int GAME_TYPE_LANDLORD = 1031;
+    public static final int GAME_TYPE_PAO_DE_KUAI = 1032;
 
     /**
      * 区域ID-逮狗腿新手房

@@ -102,6 +102,9 @@ public class GameServiceImpl implements IGameService {
     private GameNiuNiuMapper niuNiuMapper;
 
     @Resource
+    private GamePaoDeKuaiMapper paoDeKuaiMapper;
+
+    @Resource
     private GameFaultMapper gameFaultMapper;
 
     @Resource
@@ -900,6 +903,8 @@ public class GameServiceImpl implements IGameService {
             venueId = this.landlordMapper.getIdByNumber(dto.getNumber());
         else if (gameType.equals(NiuMaConstants.GAME_TYPE_NIU_NIU))
             venueId = this.niuNiuMapper.getIdByNumber(dto.getNumber());
+        else if (gameType.equals(NiuMaConstants.GAME_TYPE_PAO_DE_KUAI))
+            venueId = this.paoDeKuaiMapper.getIdByNumber(dto.getNumber());
         if (StringUtils.isEmpty(venueId)) {
             AjaxResult ajax = new AjaxResult();
             ajax.put(AjaxResult.CODE_TAG, NiuMaCodeEnum.VENUE_NOT_EXIST.getCode());
