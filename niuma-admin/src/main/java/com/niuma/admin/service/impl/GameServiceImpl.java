@@ -1672,6 +1672,26 @@ public class GameServiceImpl implements IGameService {
         return this.getRooms(dto, NiuMaConstants.GAME_TYPE_NIU_NIU_100);
     }
 
+    @Override
+    public PageResult<GameRoomDTO> getLandlord(GameRoomReqDTO dto) {
+        return this.getRooms(dto, NiuMaConstants.GAME_TYPE_LANDLORD);
+    }
+
+    @Override
+    public PageResult<GameRoomDTO> getPaoDeKuai(GameRoomReqDTO dto) {
+        return this.getRooms(dto, NiuMaConstants.GAME_TYPE_PAO_DE_KUAI);
+    }
+
+    @Override
+    public PageResult<GameRoomDTO> getNiuNiu(GameRoomReqDTO dto) {
+        return this.getRooms(dto, NiuMaConstants.GAME_TYPE_NIU_NIU);
+    }
+
+    @Override
+    public PageResult<GameRoomDTO> getZhejiangMahjong(GameRoomReqDTO dto) {
+        return this.getRooms(dto, NiuMaConstants.GAME_TYPE_ZHEJIANG_MAHJONG);
+    }
+
     private PageResult<GameRoomDTO> getRooms(GameRoomReqDTO dto, Integer gameType) {
         if (dto.getPageNum() < 1)
             throw new BadRequestException(ResultCodeEnum.PAGE_NUM_ERROR);

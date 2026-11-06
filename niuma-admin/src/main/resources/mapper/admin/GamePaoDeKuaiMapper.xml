@@ -31,4 +31,48 @@
         order by `t2`.`create_time` desc
         limit 100
     </select>
+
+    <sql id="paodekuai_room_condition">
+        <if test="venueId != null">
+            and `t1`.`venue_id` like #{venueId}
+        </if>
+        <if test="ownerId != null">
+            and `t2`.`owner_id` like #{ownerId}
+        </if>
+        <if test="number != null">
+            and `t1`.`number` like #{number}
+        </if>
+        <if test="startTime != null">
+            and `t2`.`create_time` <![CDATA[>]]> #{startTime}
+        </if>
+        <if test="endTime != null">
+            and `t2`.`create_time` <![CDATA[<]]> #{endTime}
+        </if>
+    </sql>
+
+    <select id="countRoom" resultType="Integer">
+        select count(*) from `game_pao_de_kuai` `t1`
+        inner join `venue` `t2` on `t1`.`venue_id` = `t2`.`id`
+        <where>
+            <include refid="paodekuai_room_condition"/>
+        </where>
+    </select>
+
+    <resultMap id="PaoDeKuaiRoomMap" type="com.niuma.admin.dto.GameRoomDTO">
+        <result column="venue_id" property="venueId" />
+        <result column="owner_id" property="ownerId" />
+        <result column="number" property="number" />
+        <result column="di_zhu" property="diZhu" />
+        <result column="status" property="status" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+    <select id="getRooms" resultMap="PaoDeKuaiRoomMap">
+        select `t1`.`venue_id`, `t2`.`owner_id`, `t1`.`number`, `t1`.`di_zhu`, `t2`.`status`, `t2`.`create_time`
+        from `game_pao_de_kuai` `t1` inner join `venue` `t2` on `t1`.`venue_id` = `t2`.`id`
+        <where>
+            <include refid="paodekuai_room_condition"/>
+        </where>
+        order by `t1`.`id` desc
+        limit #{offset}, #{pageSize}
+    </select>
 </mapper>
