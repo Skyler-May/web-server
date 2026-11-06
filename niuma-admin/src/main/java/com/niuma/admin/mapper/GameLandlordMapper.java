@@ -1,9 +1,12 @@
 package com.niuma.admin.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.niuma.admin.dto.RoomItemDTO;
 import com.niuma.admin.entity.GameLandlord;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public interface GameLandlordMapper extends BaseMapper<GameLandlord> {
@@ -15,4 +18,7 @@ public interface GameLandlordMapper extends BaseMapper<GameLandlord> {
 
     /** query room number by venue id */
     String getNumber(@Param("venueId") String venueId);
+
+    /** open rooms of this game (lobby room list) */
+    List<RoomItemDTO> getPublicRooms();
 }

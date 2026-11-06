@@ -3,8 +3,15 @@ package com.niuma.admin.controller;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.niuma.admin.dto.PlayerBaseDTO;
+import com.niuma.admin.dto.RoomItemDTO;
 import com.niuma.admin.entity.Player;
+import com.niuma.admin.mapper.GameLandlordMapper;
+import com.niuma.admin.mapper.GameNiuNiuMapper;
+import com.niuma.admin.mapper.GamePaoDeKuaiMapper;
+import com.niuma.admin.mapper.GameZhejiangMahjongMapper;
 import com.niuma.admin.mapper.PlayerMapper;
+import com.niuma.admin.constant.NiuMaRedisKeys;
 import com.niuma.admin.merchant.entity.Merchant;
 import com.niuma.admin.merchant.entity.MerchantPlayer;
 import com.niuma.admin.merchant.mapper.MerchantMapper;
@@ -26,13 +33,23 @@ import org.springframework.http.MediaType;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -70,6 +87,21 @@ public class H5LaunchController {
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private GameLandlordMapper landlordMapper;
+
+    @Autowired
+    private GamePaoDeKuaiMapper paoDeKuaiMapper;
+
+    @Autowired
+    private GameNiuNiuMapper niuNiuMapper;
+
+    @Autowired
+    private GameZhejiangMahjongMapper zhejiangMahjongMapper;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -137,7 +169,132 @@ public class H5LaunchController {
         }
     }
 
-    private Map<String, Object> fail(String msg) {
+    /**
+     * H5 大厅房间列表：按游戏类型列出未结束的房间，附带在线人数。
+     *
+     * 出参：{ code, msg, data: { items: [ { venueId, number, gameType, ownerId, ownerName, playerCount, maxPlayerNums } ] } }
+     */
+    @GetMapping("/rooms")
+    public Map<String, Object> rooms(@RequestParam(value = "gameType", required = false) Integer gameType) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        try {
+            int gt = gameType == null ? 1031 : gameType;
+            List<RoomItemDTO> items;
+            int maxPlayerNums;
+            switch (gt) {
+                case 1031:
+                    items = landlordMapper.getPublicRooms();
+                    maxPlayerNums = 3;
+                    break;
+                case 1032:
+                    items = paoDeKuaiMapper.getPublicRooms();
+                    maxPlayerNums = 3;
+                    break;
+                case 1024:
+                    items = niuNiuMapper.getPublicRooms();
+                    maxPlayerNums = 5;
+                    break;
+                case 1033:
+                    items = zhejiangMahjongMapper.getPublicRooms();
+                    maxPlayerNums = 4;
+                    break;
+                default:
+                    return fail("不支持的游戏类型: " + gt);
+            }
+            List<Map<String, Object>> list = new ArrayList<>();
+            if (items != null) {
+                for (RoomItemDTO item : items) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("venueId", item.getVenueId());
+                    row.put("number", item.getNumber());
+                    row.put("gameType", gt);
+                    row.put("ownerId", item.getOwnerId());
+                    row.put("ownerName", nickname(item.getOwnerId()));
+                    row.put("playerCount", playerCount(item.getVenueId()));
+                    row.put("maxPlayerNums", maxPlayerNums);
+                    list.add(row);
+                }
+            }
+            // 人多的房间排前面，方便快速凑局
+            Collections.sort(list, (a, b) -> ((Integer) b.get("playerCount")) - ((Integer) a.get("playerCount")));
+
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("items", list);
+            out.put("code", 0);
+            out.put("msg", "ok");
+            out.put("data", data);
+            return out;
+        } catch (Exception ex) {
+            log.error("H5 rooms 失败", ex);
+            return fail(ex.getMessage());
+        }
+    }
+
+    private int playerCount(String venueId) {
+        if (StringUtils.isEmpty(venueId))
+            return 0;
+        try {
+            String value = stringRedisTemplate.opsForValue().get(NiuMaRedisKeys.VENUE_PLAYER_COUNT + venueId);
+            if (StringUtils.isEmpty(value))
+                return 0;
+            return Integer.parseInt(value.trim());
+        } catch (Exception ex) {
+            return 0;
+        }
+    }
+
+    private String nickname(String playerId) {
+        if (StringUtils.isEmpty(playerId))
+            return "";
+        try {
+            PlayerBaseDTO info = playerMapper.getBaseInfo(playerId);
+            return info == null || info.getNickname() == null ? "" : info.getNickname();
+        } catch (Exception ex) {
+            return "";
+        }
+    }
+
+
+    /**
+     * 房间列表（H5 拉房号用）
+     * GET /api/h5/rooms?gameType=1031&limit=50
+     */
+    @GetMapping("/rooms")
+    public Map<String, Object> rooms(@RequestParam(value = "gameType", defaultValue = "1031") Integer gameType,
+                                     @RequestParam(value = "limit", defaultValue = "50") Integer limit) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        try {
+            String table, scoreCol;
+            switch (gameType) {
+                case 1031: table = "game_landlord"; scoreCol = "di_zhu"; break;
+                case 1032: table = "game_pao_de_kuai"; scoreCol = "di_zhu"; break;
+                case 1024: table = "game_niu_niu"; scoreCol = "di_zhu"; break;
+                case 1033: table = "game_zhejiang_mahjong"; scoreCol = "base_score"; break;
+                default:
+                    return fail("不支持的 gameType: " + gameType);
+            }
+            int cap = (limit == null || limit <= 0 || limit > 200) ? 50 : limit;
+            String sql = "select t1.number, t1." + scoreCol + " as score from `" + table + "` t1 "
+                    + "inner join venue t2 on t1.venue_id = t2.id "
+                    + "where t2.status < 2 order by t1.id desc limit " + cap;
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
+            List<Map<String, Object>> data = new ArrayList<>();
+            for (Map<String, Object> row : rows) {
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("number", String.valueOf(row.get("number")));
+                Object score = row.get("score");
+                item.put("score", score == null ? 0 : score);
+                data.add(item);
+            }
+            out.put("code", 0);
+            out.put("msg", "ok");
+            out.put("data", data);
+            return out;
+        } catch (Exception ex) {
+            log.error("查询房间列表失败", ex);
+            return fail(ex.getMessage());
+        }
+    }    private Map<String, Object> fail(String msg) {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("code", 1);
         out.put("msg", msg == null ? "unknown" : msg);

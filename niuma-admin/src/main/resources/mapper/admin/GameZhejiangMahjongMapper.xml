@@ -14,4 +14,18 @@
     <select id="getNumber" resultType="String">
         select `number` from `game_zhejiang_mahjong` where `venue_id` = #{venueId}
     </select>
+
+    <resultMap id="ZhejiangMahjongPublicRoomMap" type="com.niuma.admin.dto.RoomItemDTO">
+        <result column="venue_id" property="venueId" />
+        <result column="number" property="number" />
+        <result column="game_type" property="gameType" />
+        <result column="owner_id" property="ownerId" />
+    </resultMap>
+    <select id="getPublicRooms" resultMap="ZhejiangMahjongPublicRoomMap">
+        select `t1`.`venue_id`, `t1`.`number`, `t2`.`game_type`, `t2`.`owner_id`
+        from `game_zhejiang_mahjong` `t1` inner join `venue` `t2` on `t1`.`venue_id` = `t2`.`id`
+        where `t2`.`status` <![CDATA[<]]> 2
+        order by `t2`.`create_time` desc
+        limit 100
+    </select>
 </mapper>
