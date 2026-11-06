@@ -103,3 +103,13 @@ xss:
   excludes: /system/notice
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
+
+# 聚合商户接入（转账钱包）
+niuma:
+  merchant:
+    # 总开关：关闭后 /api/merchant/** 全部拒绝
+    enabled: true
+    # 启动地址前缀（厂商 H5 地址），商户自己的 launch_base_url 优先
+    launch-base-url: http://127.0.0.1:18090/
+    # 是否校验商户 IP 白名单
+    ip-whitelist-check: false

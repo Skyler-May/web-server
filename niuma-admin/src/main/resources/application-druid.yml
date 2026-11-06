@@ -8,7 +8,8 @@ spring:
       master:
         url: jdbc:mysql://localhost:3306/niuma?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
         username: root
-        password: 123456
+        # 部署环境覆盖：本地容器 niuma-mysql 的 root 口令为 root123
+        password: root123
       # 从库数据源
       slave:
         # 从数据源开关/默认关闭
@@ -82,7 +83,9 @@ spring:
     # 数据库索引
     database: 9
     # 密码
-    password: 123456
+    # 部署环境覆盖：本地容器 gaming-redis 未设密码，留空即可。
+    # 原厂默认 123456；生产用环境变量注入，勿提交真实口令。
+    password: 
     # 连接超时时间
     timeout: 10s
     lettuce:
