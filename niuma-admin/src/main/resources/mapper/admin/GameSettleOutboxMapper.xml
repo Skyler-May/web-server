@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.niuma.admin.mapper.GameSettleOutboxMapper">
+    <select id="selectPending" resultType="com.niuma.admin.entity.GameSettleOutbox">
+        select `id`, `venue_id` as venueId, `round_no` as roundNo, `game_type` as gameType,
+               `player_id` as playerId, `delta`, `status`, `created_at` as createdAt
+        from `game_settle_outbox`
+        where `status` = 'pending'
+        order by `id` asc
+        limit #{limit}
+    </select>
+
+    <update id="markSettled">
+        update `game_settle_outbox`
+        set `status` = 'settled', `settled_at` = now()
+        where `id` = #{id} and `status` = 'pending'
+    </update>
+
+    <update id="markFailed">
+        update `game_settle_outbox`
+        set `status` = 'failed', `remark` = #{remark}, `settled_at` = now()
+        where `id` = #{id} and `status` = 'pending'
+    </update>
+</mapper>
