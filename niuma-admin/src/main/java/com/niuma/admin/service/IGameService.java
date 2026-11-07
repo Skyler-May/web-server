@@ -134,4 +134,24 @@ public interface IGameService {
      * 查询浙江麻将房间列表
      */
     PageResult<GameRoomDTO> getZhejiangMahjong(GameRoomReqDTO dto);
+
+    /**
+     * 查询公开房列表（landlord/public）
+     */
+    AjaxResult getLandlordPublicRooms();
+
+    /**
+     * 查询公开房列表（pao-de-kuai/public）
+     */
+    AjaxResult getPaoDeKuaiPublicRooms();
+
+    /**
+     * 查询公开房列表（niu-niu/public）
+     */
+    AjaxResult getNiuNiuPublicRooms();
+
+    /**
+     * 查询公开房列表（zhejiang-mahjong/public）
+     */
+    AjaxResult getZhejiangMahjongPublicRooms();
 }

@@ -1748,4 +1748,28 @@ public class GameServiceImpl implements IGameService {
         result.setRecords(records);
         return result;
     }
+
+    @Override
+    public AjaxResult getLandlordPublicRooms() {
+        List<RoomItemDTO> items = this.landlordMapper.getPublicRooms();
+        return this.getPublicRooms(items, 3);
+    }
+
+    @Override
+    public AjaxResult getPaoDeKuaiPublicRooms() {
+        List<RoomItemDTO> items = this.paoDeKuaiMapper.getPublicRooms();
+        return this.getPublicRooms(items, 3);
+    }
+
+    @Override
+    public AjaxResult getNiuNiuPublicRooms() {
+        List<RoomItemDTO> items = this.niuNiuMapper.getPublicRooms();
+        return this.getPublicRooms(items, 5);
+    }
+
+    @Override
+    public AjaxResult getZhejiangMahjongPublicRooms() {
+        List<RoomItemDTO> items = this.zhejiangMahjongMapper.getPublicRooms();
+        return this.getPublicRooms(items, 4);
+    }
 }

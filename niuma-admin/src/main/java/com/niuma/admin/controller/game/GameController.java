@@ -170,4 +170,36 @@ public class GameController {
     public AjaxResult getNiu100PublicRooms() {
         return this.gameService.getNiu100PublicRooms();
     }
+
+    /**
+     * 查询公开房列表
+     */
+    @GetMapping("/landlord/public")
+    public AjaxResult getLandlordPublicRooms() {
+        return this.gameService.getLandlordPublicRooms();
+    }
+
+    /**
+     * 查询公开房列表
+     */
+    @GetMapping("/pao-de-kuai/public")
+    public AjaxResult getPaoDeKuaiPublicRooms() {
+        return this.gameService.getPaoDeKuaiPublicRooms();
+    }
+
+    /**
+     * 查询公开房列表
+     */
+    @GetMapping("/niu-niu/public")
+    public AjaxResult getNiuNiuPublicRooms() {
+        return this.gameService.getNiuNiuPublicRooms();
+    }
+
+    /**
+     * 查询公开房列表
+     */
+    @GetMapping("/zhejiang-mahjong/public")
+    public AjaxResult getZhejiangMahjongPublicRooms() {
+        return this.gameService.getZhejiangMahjongPublicRooms();
+    }
 }
